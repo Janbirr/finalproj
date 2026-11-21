@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart and Orders - Game Top Up Ordering System</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-page="cart">
+  <header>
+    <h1>Game Top Up Ordering System</h1>
+    <nav aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="games.html">Browse Games</a>
+      <a href="cart.html">Cart / Checkout</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Your Top-Up Cart</h2>
+      <div id="cartContents"></div>
+      <h3>Grand Total: <span id="cartTotal">To be determined</span></h3>
+      <p>Your requested amounts are listed below. The seller will confirm the final price with you before the order is completed.</p>
+    </section>
+
+    <section>
+      <h2>Order Form</h2>
+      <div id="formMessage" aria-live="polite"></div>
+      <form id="orderForm">
+        <div class="form-grid">
+          <div><label for="playerName">Player Name</label><input id="playerName" type="text" maxlength="60" required></div>
+          <div><label for="gameId">Game ID / User ID (numbers only)</label><input id="gameId" type="text" inputmode="numeric" required></div>
+          <div id="zoneField"><label for="zoneId">Server / Zone ID (required for MLBB)</label><input id="zoneId" type="text" inputmode="numeric"></div>
+          <div><label for="email">Email Address</label><input id="email" type="email" required></div>
+          <div>
+            <label for="paymentMethod">Payment Method</label>
+            <select id="paymentMethod" required>
+              <option value="">Select payment method</option>
+              <option value="GCash">GCash (simulated)</option>
+              <option value="Maya">Maya (simulated)</option>
+              <option value="Card">Card (simulated)</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">Place Order</button>
+          <a class="button secondary" href="games.html">Continue Shopping</a>
+        </div>
+      </form>
+    </section>
+
+    <section id="confirmationSection" hidden>
+      <h2>Order Confirmation</h2>
+      <div id="summaryDetails"></div>
+    </section>
+
+    <section>
+      <h2>My Saved Orders</h2>
+      <p>View, search, filter, update, or delete orders saved in this browser.</p>
+      <div class="inline-form">
+        <div><label for="orderSearch">Search by reference or player name</label><input id="orderSearch" type="search" placeholder="Search orders"></div>
+        <div><label for="gameFilter">Filter by game</label>
+          <select id="gameFilter">
+            <option value="all">All games</option><option value="mlbb">MLBB</option><option value="codm">CODM</option><option value="hok">HOK</option><option value="pubgm">PUBG Mobile</option>
+          </select>
+        </div>
+        <div><label for="statusFilter">Filter by status</label>
+          <select id="statusFilter"><option value="all">All statuses</option><option value="Pending">Pending</option><option value="Completed">Completed</option></select>
+        </div>
+      </div>
+      <div id="ordersTable"></div>
+    </section>
+  </main>
+</body>
+</html>
