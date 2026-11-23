@@ -1,8 +1,8 @@
 var games = [
-  { id: "mlbb", name: "Mobile Legends: Bang Bang", currency: "Diamonds", icon: "⚔️" },
-  { id: "codm", name: "Call of Duty Mobile", currency: "CP", icon: "🎯" },
-  { id: "hok", name: "Honor of Kings", currency: "Tokens", icon: "👑" },
-  { id: "pubgm", name: "PUBG Mobile", currency: "UC", icon: "🪖" }
+  { id: "mlbb", name: "Mobile Legends: Bang Bang", currency: "Diamonds", icon: "" },
+  { id: "codm", name: "Call of Duty Mobile", currency: "CP", icon: "" },
+  { id: "hok", name: "Honor of Kings", currency: "Tokens", icon: "" },
+  { id: "pubgm", name: "PUBG Mobile", currency: "UC", icon: "" }
 ];
 
 function readData(key, defaultValue) {
