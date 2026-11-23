@@ -1,8 +1,14 @@
+// Edit the packages below. amount = in-game currency, price = PHP.
+// Example: 50 = 56 PHP. The other tiers use the same rate (1 = 1.12 PHP) as placeholders.
 var games = [
-  { id: "mlbb", name: "Mobile Legends: Bang Bang", currency: "Diamonds", icon: "⚔️" },
-  { id: "codm", name: "Call of Duty Mobile", currency: "CP", icon: "🎯" },
-  { id: "hok", name: "Honor of Kings", currency: "Tokens", icon: "👑" },
-  { id: "pubgm", name: "PUBG Mobile", currency: "UC", icon: "🔫" }
+  { id: "mlbb", name: "Mobile Legends: Bang Bang", currency: "Diamonds", icon: "⚔️",
+    packages: [{ amount: 50, price: 56 }, { amount: 100, price: 112 }, { amount: 250, price: 280 }, { amount: 500, price: 560 }, { amount: 1000, price: 1120 }] },
+  { id: "codm", name: "Call of Duty Mobile", currency: "CP", icon: "🎯",
+    packages: [{ amount: 50, price: 56 }, { amount: 100, price: 112 }, { amount: 250, price: 280 }, { amount: 500, price: 560 }, { amount: 1000, price: 1120 }] },
+  { id: "hok", name: "Honor of Kings", currency: "Tokens", icon: "👑",
+    packages: [{ amount: 50, price: 56 }, { amount: 100, price: 112 }, { amount: 250, price: 280 }, { amount: 500, price: 560 }, { amount: 1000, price: 1120 }] },
+  { id: "pubgm", name: "PUBG Mobile", currency: "UC", icon: "🔫",
+    packages: [{ amount: 50, price: 56 }, { amount: 100, price: 112 }, { amount: 250, price: 280 }, { amount: 500, price: 560 }, { amount: 1000, price: 1120 }] }
 ];
 
 function readData(key, defaultValue) {
@@ -29,7 +35,12 @@ function saveData(key, value) {
 
 function getCart() {
   var cart = readData("topupCart", []);
-  return Array.isArray(cart) ? cart : [];
+  if (!Array.isArray(cart)) return [];
+  var valid = [];
+  for (var i = 0; i < cart.length; i++) {
+    if (typeof cart[i].price === "number" && cart[i].qty) valid.push(cart[i]);
+  }
+  return valid;
 }
 
 
@@ -38,6 +49,10 @@ function getOrders() {
   return Array.isArray(orders) ? orders : [];
 }
 
+
+function showTotal(total) {
+  return typeof total === "number" ? money(total) : total;
+}
 
 function money(amount) {
   return "₱" + Number(amount).toFixed(2);
@@ -67,52 +82,75 @@ function showGames() {
     html += '<span>Currency: ' + game.currency + '</span>';
     html += '</div>';
     html += '<div class="custom-amount">';
-    html += '<label for="amount-' + game.id + '">Enter amount of ' + game.currency + '</label>';
-    html += '<input id="amount-' + game.id + '" type="number" min="1" max="1000000" step="1" placeholder="Enter ' + game.currency + ' amount">';
+    html += '<label for="package-' + game.id + '">Choose a package</label>';
+    html += '<select id="package-' + game.id + '">';
+    for (var p = 0; p < game.packages.length; p++) {
+      var pack = game.packages[p];
+      html += '<option value="' + pack.amount + '">' + pack.amount + ' ' + game.currency + ' = ' + money(pack.price) + '</option>';
+    }
+    html += '</select>';
     html += '<button type="button" onclick="addToCart(\'' + game.id + '\')">Add to Cart</button>';
+    html += '<div id="cartMsg-' + game.id + '" aria-live="polite"></div>';
     html += '</div></article>';
   }
   area.innerHTML = html;
 }
 
-function addToCart(gameId) {
-  var selectedGame = null;
+function showCartMessage(gameId, text, isError) {
+  var box = document.getElementById("cartMsg-" + gameId);
+  if (!box) return;
+  box.textContent = text;
+  box.className = isError ? "message error" : "message";
+}
+
+function findGame(gameId) {
   for (var i = 0; i < games.length; i++) {
-    if (games[i].id === gameId) selectedGame = games[i];
+    if (games[i].id === gameId) return games[i];
   }
+  return null;
+}
+
+function addToCart(gameId) {
+  var selectedGame = findGame(gameId);
   if (!selectedGame) return;
 
-  var amountInput = document.getElementById("amount-" + gameId);
-  var amount = Number(amountInput.value);
-  if (!Number.isInteger(amount) || amount < 1 || amount > 1000000) {
-    alert("Please enter a valid amount from 1 to 1,000,000.");
-    amountInput.focus();
+  var amount = Number(document.getElementById("package-" + gameId).value);
+  var pack = null;
+  for (var i = 0; i < selectedGame.packages.length; i++) {
+    if (selectedGame.packages[i].amount === amount) pack = selectedGame.packages[i];
+  }
+  if (!pack) {
+    showCartMessage(gameId, "Please choose a valid package.", true);
     return;
   }
 
   var cart = getCart();
   var existing = null;
   for (var j = 0; j < cart.length; j++) {
-    if (cart[j].gameId === gameId) existing = cart[j];
+    if (cart[j].gameId === gameId && cart[j].amount === amount) existing = cart[j];
   }
-
-  var item = {
-    gameId: selectedGame.id,
-    gameName: selectedGame.name,
-    currency: selectedGame.currency,
-    amount: amount,
-    price: null
-  };
 
   if (existing) {
-    existing.amount = amount;
-    existing.currency = selectedGame.currency;
+    existing.qty += 1;
   } else {
-    cart.push(item);
+    cart.push({
+      gameId: selectedGame.id,
+      gameName: selectedGame.name,
+      currency: selectedGame.currency,
+      amount: pack.amount,
+      price: pack.price,
+      qty: 1
+    });
   }
 
-  if (saveData("topupCart", cart)) alert(amount + " " + selectedGame.currency + " added to cart.");
-  else alert("There was a problem saving your cart.");
+  if (saveData("topupCart", cart)) showCartMessage(gameId, pack.amount + " " + selectedGame.currency + " (" + money(pack.price) + ") added to cart.", false);
+  else showCartMessage(gameId, "There was a problem saving your cart.", true);
+}
+
+function cartTotal(cart) {
+  var total = 0;
+  for (var i = 0; i < cart.length; i++) total += cart[i].price * cart[i].qty;
+  return total;
 }
 
 function showCart() {
@@ -122,29 +160,46 @@ function showCart() {
 
   var cart = getCart();
   if (cart.length === 0) {
-    area.innerHTML = '<p class="message">Your cart is empty. <a href="games.html">Browse games</a> to add a top-up request.</p>';
-    totalArea.textContent = "To be determined";
+    area.innerHTML = '<p class="message">Your cart is empty. <a href="games.html">Browse games</a> to add a package.</p>';
+    totalArea.textContent = money(0);
+    updateZoneField();
     return;
   }
 
-  var html = '<div class="table-wrap"><table><thead><tr><th>Game</th><th>Requested Amount</th><th>Price</th><th>Action</th></tr></thead><tbody>';
+  var html = '<div class="table-wrap"><table><thead><tr><th>Game</th><th>Package</th><th>Price</th><th>Qty</th><th>Subtotal</th><th>Action</th></tr></thead><tbody>';
   for (var i = 0; i < cart.length; i++) {
     var item = cart[i];
-    html += '<tr><td>' + item.gameName + '</td><td>' + item.amount + ' ' + item.currency + '</td>';
-    html += '<td>To be determined</td><td><button class="danger" type="button" onclick="removeItem(\'' + item.gameId + '\')">Remove</button></td></tr>';
+    var args = "'" + item.gameId + "', " + item.amount;
+    html += '<tr><td>' + item.gameName + '</td><td>' + item.amount + ' ' + item.currency + '</td><td>' + money(item.price) + '</td>';
+    html += '<td><div class="quantity-controls"><button type="button" class="secondary" onclick="changeQty(' + args + ', -1)">-</button><span>' + item.qty + '</span><button type="button" class="secondary" onclick="changeQty(' + args + ', 1)">+</button></div></td>';
+    html += '<td>' + money(item.price * item.qty) + '</td>';
+    html += '<td><button class="danger" type="button" onclick="removeItem(' + args + ')">Remove</button></td></tr>';
   }
 
   html += '</tbody></table></div>';
   area.innerHTML = html;
-  totalArea.textContent = "To be determined";
+  totalArea.textContent = money(cartTotal(cart));
   updateZoneField();
 }
 
-function removeItem(gameId) {
+function changeQty(gameId, amount, change) {
+  var cart = getCart();
+  for (var i = 0; i < cart.length; i++) {
+    if (cart[i].gameId === gameId && cart[i].amount === amount) {
+      cart[i].qty += change;
+      if (cart[i].qty < 1) cart[i].qty = 1;
+      if (cart[i].qty > 99) cart[i].qty = 99;
+    }
+  }
+  saveData("topupCart", cart);
+  showCart();
+}
+
+function removeItem(gameId, amount) {
   var cart = getCart();
   var updatedCart = [];
   for (var i = 0; i < cart.length; i++) {
-    if (cart[i].gameId !== gameId) updatedCart.push(cart[i]);
+    if (!(cart[i].gameId === gameId && cart[i].amount === amount)) updatedCart.push(cart[i]);
   }
   saveData("topupCart", updatedCart);
   showCart();
@@ -208,7 +263,7 @@ function setupCheckout() {
       return;
     }
 
-    var total = "To be determined";
+    var total = cartTotal(cart);
 
     var orders = getOrders();
     var nextNumber = readData("topupNextReference", 1);
@@ -263,9 +318,9 @@ function showConfirmation(order) {
   html += '<p><strong>Date:</strong> ' + order.date + '</p><h3>Items</h3><ul>';
   for (var i = 0; i < order.items.length; i++) {
     var item = order.items[i];
-    html += '<li>' + item.gameName + ' - ' + item.amount + ' ' + item.currency + ' (Price to be determined)</li>';
+    html += '<li>' + item.gameName + ' - ' + item.amount + ' ' + item.currency + ' x' + item.qty + ' (' + money(item.price * item.qty) + ')</li>';
   }
-  html += '</ul><h3>Total: ' + order.total + '</h3><p>Final price will be determined manually by the seller.</p>';
+  html += '</ul><h3>Total: ' + showTotal(order.total) + '</h3>';
   area.innerHTML = html;
   section.hidden = false;
   section.scrollIntoView({ behavior: "smooth" });
@@ -307,9 +362,9 @@ function showOrders() {
   for (var k = 0; k < filtered.length; k++) {
     var current = filtered[k];
     var itemNames = [];
-    for (var m = 0; m < current.items.length; m++) itemNames.push(current.items[m].gameName + " - " + current.items[m].amount + " " + current.items[m].currency);
+    for (var m = 0; m < current.items.length; m++) itemNames.push(current.items[m].gameName + " - " + current.items[m].amount + " " + current.items[m].currency + " x" + (current.items[m].qty || 1));
     html += '<tr><td>' + current.reference + '</td><td>' + current.playerName + '</td><td>' + itemNames.join("<br>") + '</td>';
-    html += '<td>' + current.total + '</td><td>' + current.status + '</td><td>';
+    html += '<td>' + showTotal(current.total) + '</td><td>' + current.status + '</td><td>';
     html += '<button type="button" onclick="viewOrder(\'' + current.reference + '\')">View</button> ';
     html += '<button type="button" class="secondary" onclick="updateStatus(\'' + current.reference + '\')">Update Status</button> ';
     html += '<button type="button" class="danger" onclick="deleteOrder(\'' + current.reference + '\')">Delete</button>';
@@ -323,12 +378,7 @@ function viewOrder(reference) {
   var orders = getOrders();
   for (var i = 0; i < orders.length; i++) {
     if (orders[i].reference === reference) {
-      var order = orders[i];
-      var details = "Reference: " + order.reference + "\nPlayer: " + order.playerName + "\nGame ID: " + order.gameId;
-      if (order.zoneId) details += "\nZone ID: " + order.zoneId;
-      details += "\nEmail: " + order.email + "\nPayment: " + order.payment + "\nStatus: " + order.status + "\nTotal: " + order.total + " (manual pricing)";
-      for (var j = 0; j < order.items.length; j++) details += "\n- " + order.items[j].gameName + ": " + order.items[j].amount + " " + order.items[j].currency;
-      alert(details);
+      showConfirmation(orders[i]);
       return;
     }
   }

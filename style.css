@@ -136,7 +136,6 @@ p {
     linear-gradient(115deg, #171d38 0%, #151b32 48%, #102b3b 100%);
 }
 .hero::after {
-  content: "GAME ON";
   position: absolute;
   right: -18px;
   bottom: -43px;
