@@ -111,7 +111,7 @@ function addToCart(gameId) {
     cart.push(item);
   }
 
-  if (saveData("topupCart", cart)) alert(amount + " " + selectedGame.currency + " added to cart. Price will be determined manually.");
+  if (saveData("topupCart", cart)) alert(amount + " " + selectedGame.currency + " added to cart.");
   else alert("There was a problem saving your cart.");
 }
 
